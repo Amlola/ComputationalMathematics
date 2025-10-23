@@ -32,7 +32,6 @@ def lu_decompose(A):
 
     return L, U
 
-
 def direct_substitution(L, b):
     n = len(L)
 
@@ -44,7 +43,6 @@ def direct_substitution(L, b):
         y[i] = b[i] - result
 
     return y
-
 
 def reverse_substitution(U, y):
     n = len(U)
@@ -62,7 +60,6 @@ def reverse_substitution(U, y):
 
     return x
 
-
 def solve_lu(A, b):
     L, U = lu_decompose(A)
     if L is None:
@@ -70,7 +67,7 @@ def solve_lu(A, b):
     
     y = direct_substitution(L, b)
     x = reverse_substitution(U, y)
-    
+
     return x
 
 if __name__ == "__main__":
