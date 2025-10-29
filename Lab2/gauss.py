@@ -1,6 +1,7 @@
 from generator import generate_system
 from check_results import check_results
 
+
 def find_main_element(A, active_rows, active_cols):
     max_elem_row = active_rows[0]
     max_elem_col = active_cols[0]
@@ -46,7 +47,7 @@ def solve_gauss(A, b):
         max_elem_row, max_elem_col, max_val = find_main_element(A, active_rows, active_cols)
         main_val = A[max_elem_row][max_elem_col]
 
-        if abs(main_val) < 1e-15:
+        if abs(main_val) < 1e-12:
             print("Матрица вырождена")
             return [0.0] * n
 

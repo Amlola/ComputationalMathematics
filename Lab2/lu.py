@@ -1,6 +1,7 @@
 from generator import generate_system
 from check_results import check_results
 
+
 def lu_decompose(A):
     n = len(A)
 
@@ -17,7 +18,7 @@ def lu_decompose(A):
                 result += L[k][col] * U[col][j]
             U[k][j] = A[k][j] - result
 
-        if abs(U[k][k]) < 1e-15:
+        if abs(U[k][k]) < 1e-12:
             print("LU-разложение невозможно: один из ведущих главных миноров вырожден")
             return None, None
 
