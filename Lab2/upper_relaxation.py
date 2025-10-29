@@ -1,6 +1,5 @@
 from generator import generate_system
-from check_results import get_residual_norm2
-from check_results import check_results
+from check_results import get_residual_norm2, check_results
 from get_graphics import save_residual_plot
 
 

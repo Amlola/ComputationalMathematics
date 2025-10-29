@@ -1,6 +1,5 @@
 from generator import generate_system
-from check_results import get_residual_norm2
-from check_results import check_results
+from check_results import get_residual_norm2, check_results
 from get_graphics import save_residual_plot
 
 
@@ -74,7 +73,6 @@ def check_seidel_convergence(A):
     print(f"{'Теоретически сходится (норма < 1)' if normT < 1.0 else 'Сходимость не гарантирована'}")
 
     return normT
-
 
 if __name__ == "__main__":
     A, b = generate_system(100, 10.0, 10.0)
