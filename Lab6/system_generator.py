@@ -1,4 +1,18 @@
-def generate_system():
-    print(0)
+import numpy as np
 
-    return 0
+a_param = 1e3
+b_param = 10.0
+c_param = 0.5
+
+def f(t, z, a=a_param, b=b_param, c=c_param):
+    x, y = z
+    dx = a * (-(x**3 / 3.0 - x) + y)
+    dy = -x - b * y + c
+    return np.array([dx, dy], dtype=float)
+
+def jacobian(t, z, a=a_param, b=b_param, c=c_param):
+    x, y = z
+    return np.array([
+        [a * (1.0 - x**2), a],
+        [-1.0,             -b]
+    ], dtype=float)
