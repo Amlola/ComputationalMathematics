@@ -1,5 +1,9 @@
-from generator import generate_system
-from check_results import check_results
+try:
+    from Lab2.generator import generate_system
+    from Lab2.check_results import check_results
+except ModuleNotFoundError:
+    from generator import generate_system
+    from check_results import check_results
 
 
 def lu_decompose(A):
