@@ -143,18 +143,15 @@ def solve_gear_nordsieck(t0, t_end, z0, h):
 
 if __name__ == "__main__":
     t0 = 0.0
-    t_end = 1.0
+    t_end = 20
     z0 = np.array([2.0, 0.0], dtype=float)
 
-    h = 1e-4
+    h = 1e-3
 
     t, z = solve_gear_nordsieck(t0, t_end, z0, h)
 
     x = z[:, 0]
     y = z[:, 1]
-
-    print(f"x({t[-1]:.3f}) = {x[-1]:.10f}")
-    print(f"y({t[-1]:.3f}) = {y[-1]:.10f}")
 
     plt.figure(figsize=(10, 4))
 
@@ -173,4 +170,5 @@ if __name__ == "__main__":
     plt.grid(True)
 
     plt.tight_layout()
+    plt.savefig('gear_nordsieck.png', dpi=150, bbox_inches='tight')
     plt.show()

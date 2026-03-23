@@ -108,10 +108,10 @@ def solve_runge(t0, t_end, z0, h):
 
 if __name__ == "__main__":
     t0 = 0.0
-    t_end = 0.5
+    t_end = 20
     z0 = np.array([2.0, 0.0], dtype=float)
 
-    h = 1e-2
+    h = 1e-3
 
     t, z = solve_runge(t0, t_end, z0, h)
 
@@ -135,4 +135,5 @@ if __name__ == "__main__":
     plt.title("Фазовый портрет")
 
     plt.tight_layout()
+    plt.savefig('implicit_runge-kutta.png', dpi=150, bbox_inches='tight')
     plt.show()
