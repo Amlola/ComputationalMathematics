@@ -142,9 +142,9 @@ if __name__ == "__main__":
     t0 = 0.0
     t_end = 20.0
     z0 = np.array([2.0, 0.0], dtype=float)
-    h = 9e-2
+    h = 1e-3
 
-    order = 3
+    order = 4
 
     t, z = solve_gear(t0, t_end, z0, h, order)
 
