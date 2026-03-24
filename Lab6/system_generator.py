@@ -1,6 +1,5 @@
 import numpy as np
 
-
 a_param = 1e3
 b_param = 1
 c_param = 0.1
