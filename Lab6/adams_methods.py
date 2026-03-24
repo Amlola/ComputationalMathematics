@@ -1,7 +1,8 @@
-import os
 import argparse
-import numpy as np
+import os
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from system_generator import build_lienard_system
 
@@ -14,175 +15,112 @@ AB_COEFFICIENTS = {
 }
 
 
-def rk4_step(system_function, t, u, h):
-    k1 = system_function(t, u)
-    k2 = system_function(t + h / 2.0, u + (h / 2.0) * k1)
-    k3 = system_function(t + h / 2.0, u + (h / 2.0) * k2)
-    k4 = system_function(t + h, u + h * k3)
-    return u + h * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
+def rk4_step(system_function, t_value, u_value, step):
+    k1 = system_function(t_value, u_value)
+    k2 = system_function(t_value + step / 2.0, u_value + step * k1 / 2.0)
+    k3 = system_function(t_value + step / 2.0, u_value + step * k2 / 2.0)
+    k4 = system_function(t_value + step, u_value + step * k3)
+    return u_value + step * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
 
 
-def build_time_grid(t_span, h):
-    t0, t1 = t_span
-    if h <= 0:
-        raise ValueError("step must be positive")
+def build_time_grid(t_start, t_end, step):
+    if step <= 0:
+        raise ValueError("Шаг интегрирования должен быть положительным")
 
-    n_steps = int(round((t1 - t0) / h))
-    if n_steps <= 0:
-        raise ValueError("time interval is too short for the selected step")
+    steps_count = int(round((t_end - t_start) / step))
+    if steps_count <= 0:
+        raise ValueError("Слишком короткий интервал интегрирования для выбранного шага")
 
-    if not np.isclose(t0 + n_steps * h, t1, rtol=1e-10, atol=1e-12):
-        raise ValueError(
-            "For Adams-Bashforth methods the step must evenly divide the interval length. "
-            "Choose h such that (t1 - t0) / h is an integer."
-        )
+    if not np.isclose(t_start + steps_count * step, t_end, rtol=1e-10, atol=1e-12):
+        raise ValueError("Шаг должен точно делить длину интервала интегрирования")
 
-    return np.linspace(t0, t1, n_steps + 1, dtype=float)
+    return np.linspace(t_start, t_end, steps_count + 1, dtype=float)
 
 
-def adams_bashforth_solve(system_function, t_span, u0, h, order=4):
+def adams_bashforth_method(system_function, initial_values, t_start, t_end, step, order):
     if order not in AB_COEFFICIENTS:
-        raise ValueError("order must be 1, 2, 3, or 4")
+        raise ValueError("Поддерживаются только порядки 1, 2, 3 и 4")
 
-    t_values = build_time_grid(t_span, h)
-    n_steps = len(t_values) - 1
-    u_values = np.zeros((n_steps + 1, len(u0)), dtype=float)
-    u_values[0] = np.array(u0, dtype=float)
+    t_values = build_time_grid(t_start, t_end, step)
+    solution = np.zeros((len(t_values), len(initial_values)), dtype=float)
+    solution[0] = np.array(initial_values, dtype=float)
 
-    startup_steps = min(order - 1, n_steps)
-    for n in range(startup_steps):
-        u_values[n + 1] = rk4_step(system_function, t_values[n], u_values[n], h)
+    startup_steps = min(order - 1, len(t_values) - 1)
+    for index in range(startup_steps):
+        solution[index + 1] = rk4_step(system_function, t_values[index], solution[index], step)
 
     coefficients = AB_COEFFICIENTS[order]
-    for n in range(order - 1, n_steps):
-        increment = np.zeros_like(u_values[n])
-        for j, coefficient in enumerate(coefficients):
-            increment += coefficient * system_function(t_values[n - j], u_values[n - j])
-        u_values[n + 1] = u_values[n] + h * increment
+    for index in range(order - 1, len(t_values) - 1):
+        increment = np.zeros_like(solution[index])
+        for shift, coefficient in enumerate(coefficients):
+            increment += coefficient * system_function(t_values[index - shift], solution[index - shift])
+        solution[index + 1] = solution[index] + step * increment
 
-    return t_values, u_values
-
-
-def ensure_pictures_folder():
-    os.makedirs("pictures", exist_ok=True)
+    return t_values, solution
 
 
-def style_solution_axes(axes, title_prefix):
-    axes[0].set_title(f"{title_prefix}: y(t)")
+def build_plot(t_values, y_values, z_values, order, eps, step):
+    figure, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    axes[0].plot(t_values, y_values, label="y(t)")
+    axes[0].plot(t_values, z_values, label="z(t)")
     axes[0].set_xlabel("t")
-    axes[0].set_ylabel("y")
+    axes[0].set_ylabel("y, z")
+    axes[0].set_title(f"Метод Адамса-Башфорта {order} порядка")
     axes[0].grid(True)
+    axes[0].legend()
 
-    axes[1].set_title(f"{title_prefix}: z(t)")
-    axes[1].set_xlabel("t")
+    axes[1].plot(y_values, z_values)
+    axes[1].set_xlabel("y")
     axes[1].set_ylabel("z")
+    axes[1].set_title(f"Фазовая траектория, eps={eps:g}, h={step:g}")
     axes[1].grid(True)
 
-    axes[2].set_title(f"{title_prefix}: фазовая траектория")
-    axes[2].set_xlabel("y")
-    axes[2].set_ylabel("z")
-    axes[2].grid(True)
-
-
-
-def build_figure(system_function, t_span, u0, h, order=4, eps=1.0):
-    t_values, u_values = adams_bashforth_solve(
-        system_function=system_function,
-        t_span=t_span,
-        u0=u0,
-        h=h,
-        order=order,
-    )
-
-    y_values = u_values[:, 0]
-    z_values = u_values[:, 1]
-
-    figure, axes = plt.subplots(1, 3, figsize=(18, 5))
-    title_prefix = f"AB{order}, eps={eps:g}, h={h:g}"
-
-    axes[0].plot(t_values, y_values, linewidth=2, label="y(t)")
-    axes[1].plot(t_values, z_values, linewidth=2, label="z(t)")
-    axes[2].plot(y_values, z_values, linewidth=2)
-
-    style_solution_axes(axes, title_prefix)
-    axes[0].legend()
-    axes[1].legend()
-    plt.tight_layout()
-    return figure
-
-
-
-def build_comparison_figure(system_function, t_span, u0, steps, order=4, eps=1.0):
-    figure, axes = plt.subplots(1, 3, figsize=(18, 5))
-
-    for h in steps:
-        t_values, u_values = adams_bashforth_solve(
-            system_function=system_function,
-            t_span=t_span,
-            u0=u0,
-            h=h,
-            order=order,
-        )
-        label = f"h={h:g}"
-        axes[0].plot(t_values, u_values[:, 0], linewidth=2, label=label)
-        axes[1].plot(t_values, u_values[:, 1], linewidth=2, label=label)
-        axes[2].plot(u_values[:, 0], u_values[:, 1], linewidth=2, label=label)
-
-    title_prefix = f"AB{order}, eps={eps:g}"
-    style_solution_axes(axes, title_prefix)
-    axes[0].legend()
-    axes[1].legend()
-    axes[2].legend()
-    plt.tight_layout()
+    figure.tight_layout()
     return figure
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Explicit Adams-Bashforth methods of order 1-4 for the Van der Pol equation in Lienard form"
+        description="Явные методы Адамса-Башфорта 1-4 порядка для уравнения Ван-дер-Поля в представлении Льенара"
     )
-    parser.add_argument("order", type=int, choices=[1, 2, 3, 4])
-    parser.add_argument("filename", type=str)
-    parser.add_argument("--step", type=float, default=0.01)
-    parser.add_argument("--compare-steps", nargs="*", type=float, default=None)
-    parser.add_argument("--eps", type=float, default=1.0)
-    parser.add_argument("--t-end", type=float, default=100.0)
-    parser.add_argument("--show", action="store_true")
+    parser.add_argument("order", type=int, choices=[1, 2, 3, 4], help="Порядок метода")
+    parser.add_argument(
+        "filename",
+        nargs="?",
+        default=None,
+        help="Имя выходного PNG-файла в папке pictures (по умолчанию adams_methods_<order>.png)",
+    )
+    parser.add_argument("--step", type=float, default=0.01, help="Шаг интегрирования")
+    parser.add_argument("--eps", type=float, default=1.0, help="Параметр eps")
+    parser.add_argument("--t-start", type=float, default=0.0, help="Левая граница интервала")
+    parser.add_argument("--t-end", type=float, default=100.0, help="Правая граница интервала")
     args = parser.parse_args()
 
-    filename = args.filename
-    if not filename.lower().endswith(".png"):
-        filename += ".png"
+    output_name = args.filename or f"adams_methods_{args.order}.png"
+    if not output_name.lower().endswith(".png"):
+        output_name = f"{output_name}.png"
 
-    u0 = np.array([2.0, 0.0], dtype=float)
-    t_span = (0.0, args.t_end)
     system_function = build_lienard_system(eps=args.eps)
+    initial_values = np.array([2.0, 0.0], dtype=float)
 
-    if args.compare_steps:
-        figure = build_comparison_figure(
-            system_function=system_function,
-            t_span=t_span,
-            u0=u0,
-            steps=args.compare_steps,
-            order=args.order,
-            eps=args.eps,
-        )
-    else:
-        figure = build_figure(
-            system_function=system_function,
-            t_span=t_span,
-            u0=u0,
-            h=args.step,
-            order=args.order,
-            eps=args.eps,
-        )
+    t_values, solution = adams_bashforth_method(
+        system_function=system_function,
+        initial_values=initial_values,
+        t_start=args.t_start,
+        t_end=args.t_end,
+        step=args.step,
+        order=args.order,
+    )
 
-    ensure_pictures_folder()
-    path = os.path.join("pictures", filename)
-    figure.savefig(path, dpi=300, bbox_inches="tight")
-    print(f"Saved: {path}")
+    y_values = solution[:, 0]
+    z_values = solution[:, 1]
 
-    if args.show:
-        plt.show()
-    else:
-        plt.close(figure)
+    os.makedirs("pictures", exist_ok=True)
+    output_path = os.path.join("pictures", output_name)
+
+    figure = build_plot(t_values, y_values, z_values, args.order, args.eps, args.step)
+    figure.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close(figure)
+
+    print(f"Saved: {output_path}")
