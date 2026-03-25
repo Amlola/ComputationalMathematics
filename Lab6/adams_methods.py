@@ -91,7 +91,7 @@ if __name__ == "__main__":
         default=None,
         help="Имя выходного PNG-файла в папке pictures (по умолчанию adams_methods_<order>.png)",
     )
-    parser.add_argument("--step", type=float, default=0.01, help="Шаг интегрирования")
+    parser.add_argument("--step", type=float, default=0.5, help="Шаг интегрирования")
     parser.add_argument("--eps", type=float, default=1.0, help="Параметр eps")
     parser.add_argument("--t-start", type=float, default=0.0, help="Левая граница интервала")
     parser.add_argument("--t-end", type=float, default=100.0, help="Правая граница интервала")
