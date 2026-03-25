@@ -96,9 +96,9 @@ if __name__ == "__main__":
         filename += ".png"
 
     u0 = np.array([2.0, 0.0], dtype=float)
-    t_span = (0.0, 20.0)
+    t_span = (0.0, 100.0)
 
-    system_function = build_lienard_system(eps=0.8)
+    system_function = build_lienard_system(eps=1.0)
 
     figure = build_figure(
         system_function=system_function,
