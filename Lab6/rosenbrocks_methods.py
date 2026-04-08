@@ -132,7 +132,7 @@ def build_figure(system_function, jacobian_function, t_span, z0, h):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", type=str)
-    parser.add_argument("--step", type=float, default=1e-3)
+    parser.add_argument("--step", type=float, default=5e-2)
     parser.add_argument("--t1", type=float, default=20.0)
     args = parser.parse_args()
 
