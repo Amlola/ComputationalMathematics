@@ -1,7 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 
-def rk4_step(f, x, Y, h):
+def rk_step(f, x, Y, h):
     k1 = f(x, Y)
     k2 = f(x + 0.5 * h, [Y[i] + 0.5 * h * k1[i] for i in range(len(Y))])
     k3 = f(x + 0.5 * h, [Y[i] + 0.5 * h * k2[i] for i in range(len(Y))])
@@ -12,7 +12,7 @@ def rk4_step(f, x, Y, h):
         for i in range(len(Y))
     ]
 
-def augmented_system(x, Y, eps=1e-10):
+def system(x, Y, eps=1e-10):
     y, yp, u1, u2 = Y
 
     y_safe = max(y, 0.0)
@@ -27,8 +27,7 @@ def augmented_system(x, Y, eps=1e-10):
 
     return [dy_dx, dyp_dx, du1_dx, du2_dx]
 
-
-def integrate_with_s(s, a=0.0, b=1.0, n=1000):
+def integrate(s, a=0.0, b=1.0, n=1000):
     h = (b - a) / n
     x = a
     Y = [0.0, s, 0.0, 1.0]
@@ -37,13 +36,12 @@ def integrate_with_s(s, a=0.0, b=1.0, n=1000):
     sol = [Y[:]]
 
     for _ in range(n):
-        Y = rk4_step(augmented_system, x, Y, h)
+        Y = rk_step(system, x, Y, h)
         x += h
         xs.append(x)
         sol.append(Y[:])
 
     return xs, sol
-
 
 def shooting_newton(s0, tol=1e-8, max_iter=20, a=0.0, b=1.0, n=1000):
     s = s0
@@ -52,7 +50,7 @@ def shooting_newton(s0, tol=1e-8, max_iter=20, a=0.0, b=1.0, n=1000):
     curves = []
 
     for k in range(max_iter):
-        xs, sol = integrate_with_s(s, a, b, n)
+        xs, sol = integrate(s, a, b, n)
 
         y_b = sol[-1][0]
         u1_b = sol[-1][2]
@@ -109,17 +107,6 @@ def plot_results(xs_star, sol_star, s_history, F_history, curves):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
-    plt.figure(figsize=(8, 5))
-    plt.plot(range(len(F_history)), [abs(f) for f in F_history], marker="o")
-    plt.xlabel("Номер итерации")
-    plt.ylabel("|F(s_k)| = |y(1; s_k) - 2|")
-    plt.title("Убывание невязки")
-    plt.yscale("log")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
 
 if __name__ == "__main__":
     s0 = 2.0
