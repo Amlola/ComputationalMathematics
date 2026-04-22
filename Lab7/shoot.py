@@ -1,5 +1,11 @@
-import math
+import os
 import matplotlib.pyplot as plt
+
+from generate_system import generate_system
+
+
+PICTURES_DIR = "pictures"
+
 
 def rk_step(f, x, Y, h):
     k1 = f(x, Y)
@@ -12,22 +18,10 @@ def rk_step(f, x, Y, h):
         for i in range(len(Y))
     ]
 
-def system(x, Y, eps=1e-10):
-    y, yp, u1, u2 = Y
 
-    y_safe = max(y, 0.0)
-    sqrt_y = math.sqrt(y_safe)
-    denom = max(sqrt_y, eps)
+def integrate(s, a=0.0, b=1.0, n=1000, eps=1e-10):
+    system = generate_system(eps=eps)
 
-    dy_dx = yp
-    dyp_dx = x * sqrt_y
-
-    du1_dx = u2
-    du2_dx = x * u1 / (2.0 * denom)
-
-    return [dy_dx, dyp_dx, du1_dx, du2_dx]
-
-def integrate(s, a=0.0, b=1.0, n=1000):
     h = (b - a) / n
     x = a
     Y = [0.0, s, 0.0, 1.0]
@@ -42,6 +36,7 @@ def integrate(s, a=0.0, b=1.0, n=1000):
         sol.append(Y[:])
 
     return xs, sol
+
 
 def shooting_newton(s0, tol=1e-8, max_iter=20, a=0.0, b=1.0, n=1000):
     s = s0
@@ -73,7 +68,9 @@ def shooting_newton(s0, tol=1e-8, max_iter=20, a=0.0, b=1.0, n=1000):
     raise RuntimeError("Метод Ньютона не сошелся за заданное число итераций.")
 
 
-def plot_results(xs_star, sol_star, s_history, F_history, curves):
+def plot_results(xs_star, sol_star, s_history, F_history, curves, pictures_dir=PICTURES_DIR):
+    os.makedirs(pictures_dir, exist_ok=True)
+
     y_star = [state[0] for state in sol_star]
 
     plt.figure(figsize=(8, 5))
@@ -86,6 +83,7 @@ def plot_results(xs_star, sol_star, s_history, F_history, curves):
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
+    plt.savefig(os.path.join(pictures_dir, "01_iterations_curves.png"), dpi=200, bbox_inches="tight")
     plt.show()
 
     plt.figure(figsize=(8, 5))
@@ -97,6 +95,7 @@ def plot_results(xs_star, sol_star, s_history, F_history, curves):
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
+    plt.savefig(os.path.join(pictures_dir, "02_final_solution.png"), dpi=200, bbox_inches="tight")
     plt.show()
 
     plt.figure(figsize=(8, 5))
@@ -106,7 +105,9 @@ def plot_results(xs_star, sol_star, s_history, F_history, curves):
     plt.title("Изменение пристрелочного параметра")
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig(os.path.join(pictures_dir, "03_shooting_parameter.png"), dpi=200, bbox_inches="tight")
     plt.show()
+
 
 if __name__ == "__main__":
     s0 = 2.0
@@ -115,7 +116,7 @@ if __name__ == "__main__":
         s0=s0,
         tol=1e-8,
         max_iter=20,
-        n=2000
+        n=2000,
     )
 
     print("\nНайденный пристрелочный параметр:")
